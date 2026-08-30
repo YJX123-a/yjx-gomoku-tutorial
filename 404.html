@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval'; object-src 'none'; child-src 'self' blob:;">
 <script>(function(){
   var needsPolyfill=(function(){
     try{
@@ -42,45 +43,50 @@
 <meta property="og:description" content="通过理论讲解、棋盘演示和实战练习，帮助五子棋爱好者掌握无禁手规则下黑方先手必胜的开局思路与杀法技巧。">
 <meta name="description" content="通过理论讲解、棋盘演示和实战练习，帮助五子棋爱好者掌握无禁手规则下黑方先手必胜的开局思路与杀法技巧，逐步提升对弈能力。">
 <style>
-/* 隐藏平台生成标识/水印 */
 [class*="badge"],[class*="watermark"],[class*="branding"],[class*="powered-by"],
-[id*="badge"],[id*="watermark"]{display:none!important}
+[class*="miaoda"],[class*="feishu"],[class*="doubao"],
+[id*="badge"],[id*="watermark"],[id*="miaoda"],[id*="feishu"]{display:none!important}
+iframe{display:none!important;width:0!important;height:0!important;opacity:0!important;visibility:hidden!important}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script>
 (function(){
-  function findBadgeRoot(el){
-    if(!el||el.nodeType!==1)return null;
-    if((el.textContent||"").indexOf("豆包")===-1)return null;
-    var target=null,node=el;
-    while(node&&node!==document.documentElement){
-      var s=window.getComputedStyle(node);
-      if(s.position==="fixed")target=node;
-      node=node.parentElement;
+  var KEY="豆包";
+  function scan(root){
+    if(!root)root=document;
+    if(!root.querySelectorAll)return;
+    var all=root.querySelectorAll("*");
+    for(var i=0;i<all.length;i++){
+      var el=all[i];
+      if(el.shadowRoot)scan(el.shadowRoot);
+      var txt=(el.textContent||"").trim();
+      if(txt&&txt.length<30&&txt.indexOf(KEY)!==-1&&el.children.length===0){
+        var c=el,p=el.parentElement;
+        while(p&&p!==document.body&&p.id!=="root"){
+          var r=p.getBoundingClientRect();
+          if(r.width>320||r.height>160)break;
+          c=p;p=p.parentElement;
+        }
+        if(c&&c!==document.body&&c.id!=="root")c.remove();
+      }
     }
-    return target;
-  }
-  function scanAndRemove(nodes){
-    for(var i=0;i<nodes.length;i++){
-      var node=nodes[i];
-      if(node.nodeType!==1)continue;
-      var root=findBadgeRoot(node);
-      if(root){root.remove();continue;}
-      var desc=node.getElementsByTagName("*");
-      for(var j=0;j<desc.length;j++){
-        root=findBadgeRoot(desc[j]);
-        if(root){root.remove();break;}
+    var ifs=root.querySelectorAll("iframe");
+    for(var j=0;j<ifs.length;j++){
+      var f=ifs[j],fr=f.getBoundingClientRect(),fs=f.src||"";
+      if((fr.width<250&&fr.height<120)||/badge|watermark|miaoda|feishu|doubao|bytedance|ibytedapm|bytescm/i.test(fs)){
+        f.remove();
       }
     }
   }
-  scanAndRemove(document.body.children);
-  new MutationObserver(function(muts){
-    for(var i=0;i<muts.length;i++)scanAndRemove(muts[i].addedNodes);
-  }).observe(document.documentElement,{childList:true,subtree:true});
-  setTimeout(function(){scanAndRemove(document.body.children);},500);
-  setTimeout(function(){scanAndRemove(document.body.children);},2000);
+  scan(document);
+  new MutationObserver(function(m){for(var i=0;i<m.length;i++)scan(m[i].target);})
+    .observe(document.documentElement,{childList:true,subtree:true});
+  var n=0;
+  var t=setInterval(function(){scan(document);if(++n>50)clearInterval(t);},80);
+  setInterval(function(){scan(document);},3000);
+  document.addEventListener("DOMContentLoaded",function(){scan(document);});
 })();
 </script>
 </body>
